@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "train-kr"
+version = "0.1.0"
+description = ""
+authors = ["jayone <imdff0803@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+srtrain = "^2.5.0"
+pydantic-settings = "^2.5.2"
+slack-sdk = "^3.32.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
