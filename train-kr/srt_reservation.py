@@ -1,9 +1,9 @@
 import asyncio
-import time
 import logging
 from SRT import SRT
 from config import settings
 from SRT.errors import SRTResponseError
+from slack_client import SlackClient
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -21,6 +21,8 @@ async def reserve_ticket(
     start_time: str,
     start_limit: str,
 ):
+    slack_client = SlackClient() if settings.slack_bot_token else None
+
     while True:
         trains = await asyncio.to_thread(
             srt.search_train,
@@ -47,7 +49,8 @@ async def reserve_ticket(
             continue
 
         logger.info(f"reserver success: {reservation}")
-        # TODO: notify to me
+        if slack_client:
+            slack_client.send_message(f"reserve success: {reservation}")
         return reservation
 
 

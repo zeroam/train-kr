@@ -10,6 +10,7 @@ python = "^3.12"
 srtrain = "^2.5.0"
 pydantic-settings = "^2.5.2"
 slack-sdk = "^3.32.0"
+korail2 = "^0.4.0"
 
 
 [build-system]
