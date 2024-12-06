@@ -24,24 +24,26 @@ async def reserve_ticket(
     slack_client = SlackClient() if settings.slack_bot_token else None
 
     while True:
-        trains = await asyncio.to_thread(
-            srt.search_train,
-            dep=dep,
-            arr=arr,
-            date=date,
-            time=start_time,
-            time_limit=start_limit,
-            available_only=False,
-        )
-
-        # 일반석만 예매
-        available_trains = [train for train in trains if train.general_seat_available()]
-        logger.info(f"available trains({dep}~{arr}): {len(available_trains)}")
-        if len(available_trains) == 0:
-            await asyncio.sleep(1)
-            continue
-
         try:
+            trains = await asyncio.to_thread(
+                srt.search_train,
+                dep=dep,
+                arr=arr,
+                date=date,
+                time=start_time,
+                time_limit=start_limit,
+                available_only=False,
+            )
+
+            # 일반석만 예매
+            available_trains = [
+                train for train in trains if train.general_seat_available()
+            ]
+            logger.info(f"available trains({dep}~{arr}): {len(available_trains)}")
+            if len(available_trains) == 0:
+                await asyncio.sleep(1)
+                continue
+
             reservation = await asyncio.to_thread(srt.reserve, available_trains[0])
         except SRTResponseError as e:
             logger.error(e)
