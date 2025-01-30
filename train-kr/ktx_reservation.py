@@ -1,6 +1,13 @@
 import asyncio
 import logging
-from korail2 import Korail, NoResultsError, TrainType, AdultPassenger, ReserveOption
+from korail2 import (
+    Korail,
+    NoResultsError,
+    TrainType,
+    AdultPassenger,
+    ReserveOption,
+    KorailError,
+)
 
 from config import settings
 from slack_client import SlackClient
@@ -35,25 +42,32 @@ async def reserve_ticket(
                 train_type=TrainType.KTX,
                 passengers=passengers,
             )
+
+            # filter train with time limit
+            available_trains = [
+                train for train in trains if train.dep_time <= start_limit
+            ]
+            logger.info(f"available trains: {available_trains}")
+            if len(available_trains) == 0:
+                await asyncio.sleep(1)
+                continue
+
+            reservation = await asyncio.to_thread(
+                client.reserve,
+                train=available_trains[0],
+                passengers=passengers,
+                option=ReserveOption.GENERAL_ONLY,
+            )
+            logger.info(f"reserve success: {reservation}")
         except NoResultsError:
             logger.info("no results")
             await asyncio.sleep(1)
             continue
-
-        # filter train with time limit
-        available_trains = [train for train in trains if train.dep_time <= start_limit]
-        logger.info(f"available trains: {available_trains}")
-        if len(available_trains) == 0:
+        except KorailError as e:
+            logger.error(e)
             await asyncio.sleep(1)
             continue
 
-        reservation = await asyncio.to_thread(
-            client.reserve,
-            train=available_trains[0],
-            passengers=passengers,
-            option=ReserveOption.GENERAL_ONLY,
-        )
-        logger.info(f"reserve success: {reservation}")
         if slack_client:
             slack_client.send_message(f"reserve success: {reservation}")
         return reservation
@@ -65,20 +79,20 @@ async def main():
 
     client = Korail(korail_id, korail_pw)
     tickets_to_reserve = [
-        {
-            "dep": "서울",
-            "arr": "부산",
-            "date": "20241026",
-            "start_time": "090000",
-            "start_limit": "100000",
-            "passengers": [AdultPassenger(1)],
-        },
+        # {
+        #     "dep": "서울",
+        #     "arr": "부산",
+        #     "date": "20250128",
+        #     "start_time": "085000",
+        #     "start_limit": "093000",
+        #     "passengers": [AdultPassenger(1)],
+        # },
         {
             "dep": "부산",
             "arr": "서울",
-            "date": "20241026",
-            "start_time": "180000",
-            "start_limit": "190000",
+            "date": "20250130",
+            "start_time": "130000",
+            "start_limit": "210000",
             "passengers": [AdultPassenger(1)],
         },
     ]

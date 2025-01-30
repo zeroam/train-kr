@@ -5,12 +5,15 @@ from config import settings
 from SRT.errors import SRTResponseError
 from slack_client import SlackClient
 
-logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+
+INTERVAL = 3
+
+logger = logging.getLogger(__name__)
 
 
 async def reserve_ticket(
@@ -41,13 +44,13 @@ async def reserve_ticket(
             ]
             logger.info(f"available trains({dep}~{arr}): {len(available_trains)}")
             if len(available_trains) == 0:
-                await asyncio.sleep(1)
+                await asyncio.sleep(INTERVAL)
                 continue
 
             reservation = await asyncio.to_thread(srt.reserve, available_trains[0])
         except SRTResponseError as e:
             logger.error(e)
-            await asyncio.sleep(1)
+            await asyncio.sleep(INTERVAL)
             continue
 
         logger.info(f"reserver success: {reservation}")
@@ -62,18 +65,18 @@ async def main():
 
     srt = SRT(srt_id, srt_password)
     tickets_to_reserve = [
-        {
-            "dep": "수서",
-            "arr": "부산",
-            "date": "20240916",
-            "start_time": "090000",
-            "start_limit": "103000",
-        },
+        # {
+        #     "dep": "수서",
+        #     "arr": "부산",
+        #     "date": "20250128",
+        #     "start_time": "090000",
+        #     "start_limit": "093000",
+        # },
         {
             "dep": "부산",
             "arr": "수서",
-            "date": "20240917",
-            "start_time": "190000",
+            "date": "20250130",
+            "start_time": "130000",
             "start_limit": "210000",
         },
     ]
